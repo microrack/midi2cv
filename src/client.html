@@ -1,0 +1,143 @@
+R"html(
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen and Parameters Viewer</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            border-radius: 5px;
+            user-select: none;
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* IE10+/Edge */
+        }
+    </style>
+</head>
+<body>
+    <h2>Screen</h2>
+    <canvas id="screenCanvas" width="128" height="512"></canvas>
+    <div>
+        <div class="button" onclick="sendButtonClick('A')">Button A</div>
+        <div class="button" onclick="sendButtonClick('B')">Button B</div>
+        <div class="button" onclick="sendButtonClick('encoder')">Encoder Button</div>
+        <div class="button" onclick="sendButtonClick('encoder_increase')">Encoder +</div>
+        <div class="button" onclick="sendButtonClick('encoder_decrease')">Encoder -</div>
+    </div>
+
+    <h2>Parameters</h2>
+    <table id="parametersTable">
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Parameters will be inserted here -->
+        </tbody>
+    </table>
+
+    <script>
+        const fetchScreenData = async () => {
+            const response = await fetch('/screen_data');
+            const data = await response.json();
+            return data.pixels;
+        };
+
+        const drawScreen = (pixels) => {
+            const canvas = document.getElementById('screenCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const pixelRows = pixels.split('\n');
+            for (let y = 0; y < pixelRows.length; y++) {
+                const row = pixelRows[y];
+                for (let x = 0; x < row.length; x++) {
+                    ctx.fillStyle = row[x] === 'X' ? 'white' : 'black';
+                    ctx.fillRect(x*4, y*4, 4, 4);
+                }
+            }
+        };
+
+        const fetchParameters = async () => {
+            const response = await fetch('/parameters');
+            const data = await response.json();
+            return data;
+        };
+
+        const updateParameter = async (key, value) => {
+            const response = await fetch('/parameters', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ [key]: value }),
+            });
+            const data = await response.json();
+            return data;
+        };
+
+        const createInputField = (key, value) => {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = value;
+            input.addEventListener('change', async () => {
+                await updateParameter(key, input.value);
+            });
+            return input;
+        };
+
+        const populateTable = (data) => {
+            const tableBody = document.getElementById('parametersTable').querySelector('tbody');
+            tableBody.innerHTML = ''; // Clear existing rows
+            Object.keys(data).forEach(key => {
+                const row = tableBody.insertRow();
+                const cellKey = row.insertCell(0);
+                const cellValue = row.insertCell(1);
+                cellKey.textContent = key;
+                cellValue.appendChild(createInputField(key, data[key]));
+            });
+        };
+
+        const sendButtonClick = async (button) => {
+            const response = await fetch('/click', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `button=${button}`,
+            });
+            const data = await response.text();
+            console.log(data);
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const parameters = await fetchParameters();
+            populateTable(parameters);
+            setInterval(async () => {
+                const pixels = await fetchScreenData();
+                drawScreen(pixels);
+            }, 500); // Fetch and draw screen at 2 FPS
+        });
+    </script>
+</body>
+</html>
+)html";
