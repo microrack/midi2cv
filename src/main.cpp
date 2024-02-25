@@ -173,6 +173,9 @@ void TaskUI(void* pvParameters) {
   }
 }
 
+int16_t buffer[4096];
+int bufferIndex = 0;
+
 void TaskMusicProcessing(void* pvParameters) {
   const TickType_t xFrequency = pdMS_TO_TICKS(1);
   TickType_t xLastWakeTime = xTaskGetTickCount();
@@ -193,6 +196,10 @@ void TaskMusicProcessing(void* pvParameters) {
     // + ledcWrite 2000 us :EEE
     // but ledc alone is 50 us. Hmm....
     // switching to a more native esp32 analog read gives 250 in total
+
+    // if we multisample, better doing it with some delay
+    auto prev_value = read_adc_idf(ADC_0);
+
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
     unsigned long startTick = micros();
 
@@ -202,7 +209,10 @@ void TaskMusicProcessing(void* pvParameters) {
 
     input.glide = device.parameters.glide;
 
-    input.pinCv[0] = adcToVoltsDevboard.map(read_adc_idf(ADC_0));
+    auto value = read_adc_idf(ADC_0);
+    auto mean_value = (prev_value + value) / 2.0f;
+
+    input.pinCv[0] = adcToVoltsDevboard.map(mean_value);
     input.pinGate[0] = adcToVoltsDevboard.map(read_adc_idf(ADC_1));
     input.pinMod[0] = adcToVoltsDevboard.map(read_adc_idf(ADC_2));
     input.pinMod[1] = adcToVoltsDevboard.map(read_adc_idf(ADC_3));

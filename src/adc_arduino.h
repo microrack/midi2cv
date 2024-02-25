@@ -71,11 +71,23 @@ float read_adc_idf(uint8_t pin) {
     adc_reading += adc1_get_raw((adc1_channel_t)get_adc1_channel(pin));
   }
   adc_reading /= NO_OF_SAMPLES;
-  // Convert adc_reading to voltage in mV
-  // This doesn't work, check esp_adc_cal_characterize call below
-  // float voltage = esp_adc_cal_raw_to_voltage(adc_reading, &adc_chars[adcPinToCharsIndex(pin)]);
 
   return adc_reading;
+}
+
+float read_adc_idf_voltage(uint8_t pin) {
+  uint32_t adc_reading = 0;
+
+  // Multisampling
+  for (int i = 0; i < NO_OF_SAMPLES; i++) {
+    adc_reading += adc1_get_raw((adc1_channel_t)get_adc1_channel(pin));
+  }
+  adc_reading /= NO_OF_SAMPLES;
+  // Convert adc_reading to voltage in mV
+  // This doesn't work, check esp_adc_cal_characterize call below
+  float voltage = esp_adc_cal_raw_to_voltage(adc_reading, &adc_chars[adcPinToCharsIndex(pin)]);
+
+  return voltage;
 }
 
 void check_efuse(void) {
@@ -103,11 +115,13 @@ void print_char_val_type(esp_adc_cal_value_t val_type) {
   }
 }
 void adc_setup() {
-  adc1_config_width(ADC_WIDTH_12Bit);
+  auto bits = ADC_WIDTH_12Bit;
+  auto atten = ADC_ATTEN_11db;
+  adc1_config_width(bits);
   for (int c = 0; c < adcPins.size(); c++) {
-    adc1_config_channel_atten(get_adc1_channel(adcPins[c]), ADC_ATTEN_11db);
-    esp_adc_cal_value_t val_type = esp_adc_cal_characterize(
-        ADC_UNIT_1, ADC_ATTEN_11db, ADC_WIDTH_12Bit, REF_VOLTAGE, &adc_chars[c]);
+    adc1_config_channel_atten(get_adc1_channel(adcPins[c]), atten);
+    esp_adc_cal_value_t val_type
+        = esp_adc_cal_characterize(ADC_UNIT_1, atten, bits, REF_VOLTAGE, &adc_chars[c]);
     print_char_val_type(val_type);
   }
 }

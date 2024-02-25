@@ -1,6 +1,8 @@
 #pragma once
 #include <MIDI.h>
 
+#include <unordered_map>
+
 constexpr int sampleRate = 1000;
 
 // Most components expect the updates to be smooth,
@@ -40,7 +42,6 @@ float midiNoteToCv(int midiNote) {
   // Voltage = (MIDI note number - 69) / 12.0
   // This formula gives us a voltage of 0V for MIDI note 69, and increases/decreases by 1V per
   // octave
-
   return (midiNote - 69) / 12.0f;
 }
 
@@ -63,7 +64,7 @@ struct LinearMapper {
   }
 };
 
-LinearMapper adcToVoltsDevboard{1946.0f, 3334.0f, 0.0f, 3.3f};
+LinearMapper adcToVoltsDevboard{1947.96f, 3179.1f, 0.0f, 3.0f};
 LinearMapper adcToVolts{0.0f, 4095.0f, -5.0f, 5.0f};
 LinearMapper digitalInToAnalogIn{0.0f, 1.0f, 0.0f, 5.0f};
 LinearMapper modCvToMidiCc{0.0f, 5.0f, 0.0f, 127.0f};
@@ -165,6 +166,21 @@ struct RisingAnalogEdgeDetector : public RisingEdgeDetector {
 
 struct RisingDigitalEdgeDetector : public RisingEdgeDetector {
   RisingDigitalEdgeDetector() : RisingEdgeDetector(0.5f) {}
+};
+
+template<int delay>
+struct RisingAnalogEdgeDetectorWithDelay : public RisingAnalogEdgeDetector {
+  std::array<int, delay> buffer;
+  int bufferIndex = 0;
+
+  RisingAnalogEdgeDetectorWithDelay() {}
+
+  int tick(float signal) {
+    int edge = RisingAnalogEdgeDetector::tick(signal);
+    buffer[bufferIndex] = edge;
+    bufferIndex = (bufferIndex + 1) % delay;
+    return buffer[bufferIndex];
+  }
 };
 
 struct Clock {
@@ -326,10 +342,10 @@ struct OnePoleLowpass {
 };
 
 struct DoubleLowpass {
-  OnePoleLowpass lowpass1;
-  OnePoleLowpass lowpass2;
-  OnePoleLowpass lowpass3;
-  OnePoleLowpass lowpass4;
+  OnePoleLowpass lowpass1{15.0f};
+  OnePoleLowpass lowpass2{15.0f};
+  OnePoleLowpass lowpass3{15.0f};
+  OnePoleLowpass lowpass4{15.0f};
 
   DoubleLowpass() = default;
 
@@ -342,9 +358,23 @@ struct DoubleLowpass {
 
   float tick(float input) {
     float state = lowpass1.tick(input);
-    float state2 = lowpass2.tick(state);
-    float state3 = lowpass3.tick(state2);
-    return lowpass4.tick(state3);
+    state = lowpass2.tick(state);
+    state = lowpass3.tick(state);
+    state = lowpass4.tick(state);
+    return state;
+  }
+};
+
+template<int bufferSize = 15>
+struct MedianFilter {
+  std::array<float, bufferSize> buffer = {0.0f};
+  int bufferIndex = 0;
+
+  float tick(float input) {
+    buffer[bufferIndex] = input;
+    bufferIndex = (bufferIndex + 1) % bufferSize;
+    std::sort(buffer.begin(), buffer.end());
+    return buffer[bufferSize / 2];
   }
 };
 
@@ -403,9 +433,10 @@ struct Dsp {
 
     // pins-to-midi part
     //
-    std::array<DoubleLowpass, numCvGateOutputChannels> smoothCvForMidi;
-    std::array<RisingAnalogEdgeDetector, numModInputChannels> gateRisingDetector;
-    std::array<RisingAnalogEdgeDetector, numModInputChannels> gateFallingDetector;
+    // 25 ms delay to deal with crappy ESP32 ADC
+    std::array<MedianFilter<20>, numCvGateOutputChannels> smoothCvForMidi;
+    std::array<RisingAnalogEdgeDetectorWithDelay<25>, numModInputChannels> gateRisingDetector;
+    std::array<RisingAnalogEdgeDetectorWithDelay<25>, numModInputChannels> gateFallingDetector;
   };
 
   Processors p;
@@ -423,7 +454,7 @@ struct Dsp {
     std::array<float, numCvGateInputChannels> midiNoteCv;
     std::array<int, numCvGateInputChannels> noteOnTrigger;
     std::array<int, numCvGateInputChannels> noteOffTrigger;
-    float glide{0.01};
+    float glide{10};
 
     // pins-to-midi part
     //
@@ -441,8 +472,8 @@ struct Dsp {
     int midiClockTrigger{0};
 
     // midi-to-cv-gate part
-    std::array<float, numCvGateOutputChannels> cv;
-    std::array<int, numCvGateOutputChannels> gate;
+    std::array<float, numCvGateInputChannels> cv;
+    std::array<int, numCvGateInputChannels> gate;
 
     // pins-to-midi part
     std::array<float, numCvGateOutputChannels> cvForMidi;
@@ -458,8 +489,12 @@ struct Dsp {
     p.smoothClockPeriod.state = float(sampleRate * 60 / 120 / 4);
   }
 
+  std::array<float, numCvGateInputChannels> lastCvMidiNote;
+
   std::array<int, numCvGateOutputChannels> soundingNoteForPin;
   std::array<int, numModOutputChannels> lastModValueFromPin;
+
+  std::unordered_map<int, int> currentlySoundingNotes;
 
   Output tick(Input i) {
     Output o{};
@@ -517,7 +552,9 @@ struct Dsp {
 
     float smoothedGlide = p.smoothGlide.tick(i.glide);
     for (int c = 0; c < numCvGateOutputChannels; ++c) {
-      o.cv[c] = p.CVOutWithGlide[c].tick(i.midiNoteCv[c], smoothedGlide);
+      // let's not support glide for now
+      // o.cv[c] = p.CVOutWithGlide[c].tick(i.midiNoteCv[c], 0.2 /*smoothedGlide*/);
+      o.cv[c] = i.midiNoteCv[c];
       o.gate[c] = p.noteOnOffToGate[c].tick(i.noteOnTrigger[c], i.noteOffTrigger[c]);
     }
 
@@ -549,18 +586,13 @@ struct Dsp {
     while (midi.read()) {
       switch (midi.getType()) {
         case midi::NoteOn: {
-          Serial.println("NoteOn");
-          input.midiNoteCv[0] = midiNoteToCv(midi.getData1());
-          input.noteOnTrigger[0] = 1;
+          currentlySoundingNotes[midi.getData1()] = midi.getData2();
+          lastCvMidiNote[0] = midi.getData1();
           break;
         }
         case midi::NoteOff: {
-          static int iiii = 0;
-          ++iiii;
-          if (iiii % 1000 == 0) {
-            Serial.println("NoteOff");
-          }
           input.noteOffTrigger[0] = 1;
+          currentlySoundingNotes.erase(midi.getData1());
           break;
         }
         case midi::Clock: {
@@ -617,6 +649,8 @@ struct Dsp {
         }
       }
     }
+
+    input.midiNoteCv[0] = midiNoteToCv(lastCvMidiNote[0]);
     Dsp::Output o = tick(input);
 
     if (o.midiClockTrigger) {
@@ -625,12 +659,26 @@ struct Dsp {
 
     // pins-to-midi part
     for (int c = 0; c < numCvGateOutputChannels; ++c) {
+      auto currentNote = cvToMidiNote(o.cvForMidi[c]);
+      bool newNote = false;
       if (o.cvToMidiNoteOnTrigger[c]) {
+        newNote = true;
+      }
+      // this highly depends on low noise cvForMidi
+      // if it's noisy, a log of extra notes will appear
+      if (currentNote != soundingNoteForPin[c]) {
+        newNote = true;
+      }
+      if (newNote) {
         if (soundingNoteForPin[c] != -1) {
           // this shouldn't happen, unless filtering logic in RisingAnalogEdgeDetector is glitching
           midi.sendNoteOff(soundingNoteForPin[c], 127, 1);
         }
-        soundingNoteForPin[c] = cvToMidiNote(o.cvForMidi[c]);
+
+        /*if (currentNote != soundingNoteForPin[c]) {
+          midi.sendNoteOff(soundingNoteForPin[c], 127, 1);
+        }*/
+        soundingNoteForPin[c] = currentNote;
         midi.sendNoteOn(soundingNoteForPin[c], 127, 1);
       }
       if (o.cvToMidiNoteOffTrigger[c]) {
