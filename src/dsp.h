@@ -185,16 +185,24 @@ struct RisingAnalogEdgeDetectorWithDelay : public RisingAnalogEdgeDetector {
 
 struct Clock {
   int counter{999999999};
+  float counter{999999999.0f};
 
-  int tick(int period) {
-    counter += 1;
+  int tick(float period) {
+    counter += 1.0f;
+    // use while or fmod?
     if (counter >= period) {
-      counter = 0;
+      if (counter == 999999999.0f) {
+        counter = 0.0f;
+        break;
+      } else {
+        counter = counter - period;
+      }
       return 1;
     }
     return 0;
   }
 };
+
 
 struct NoteOnOffToGate {
   int noteOn{0};

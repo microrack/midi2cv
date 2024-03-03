@@ -5,8 +5,8 @@
 enum class ClockInputSignal {
   Internal,
   Midi,   // midi is Ppqn24
-  Ppqn2,  // korg volca default
   Ppqn4,  // standard step per 16th note, should be default
+  Ppqn2,  // korg volca default
   Ppqn24,
   Ppqn48
 };

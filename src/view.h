@@ -7,7 +7,21 @@ void drawIdle(const Ui::Idle& idle) {
   display.setTextSize(2);
   display.setCursor(0, 10);
   display.printf("BPM\n");
-  display.printf("%d", int(device.parameters.bpm));
+  display.printf("%d\n", int(device.parameters.bpm));
+  switch (device.parameters.clockSource) {
+    case ClockInputSignal::Internal: {
+      display.printf("INT");
+      break;
+    }
+    case ClockInputSignal::Midi: {
+      display.printf("MID");
+      break;
+    }
+    case ClockInputSignal::Ppqn4: {
+      display.printf("TRG");
+      break;
+    }
+  }
 
   display.setRotation(0);
   display.setFont();
@@ -81,6 +95,22 @@ void drawMenu(const Ui::Menu& menu) {
         display.printf("MCH:\n%d\n", device.parameters.midiChannel);
       }
       break;
+    }
+    case Ui::MenuItem::MenuType::Sync: {
+      switch (device.parameters.clockSource) {
+        case ClockInputSignal::Internal: {
+          display.printf("INT");
+          break;
+        }
+        case ClockInputSignal::Midi: {
+          display.printf("MID");
+          break;
+        }
+        case ClockInputSignal::Ppqn4: {
+          display.printf("TRG");
+          break;
+        }
+      }
     }
     case Ui::MenuItem::MenuType::ModA: {
       display.printf("A:\n%d\n", device.parameters.inModChannelNumber[0]);

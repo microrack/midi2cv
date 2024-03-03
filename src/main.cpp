@@ -118,6 +118,18 @@ void handleActions(MidiToCvDevice& device) {
           device.parameters.midiChannel = newMidiChannel;
           break;
         }
+        case Ui::MenuItem::MenuType::Sync: {
+          int delta = encoder_delta / 2;
+          int newValue = static_cast<int>(device.parameters.clockSource) + delta;
+          if (newValue <= 0) {
+            newValue = 0;
+          }
+          if (newValue > 2) {
+            newValue = 2;
+          }
+          device.parameters.clockSource = static_cast<ClockInputSignal>(newValue);
+          break;
+        }
         case Ui::MenuItem::MenuType::ModA: {
           int newModA = device.parameters.inModChannelNumber[0] + encoder_delta / 2;
           if (newModA < 0) {
@@ -199,8 +211,8 @@ void TaskMusicProcessing(void* pvParameters) {
 
     // if we multisample, better doing it with some delay
     auto prev_value = read_adc_idf(ADC_0);
-
     vTaskDelayUntil(&xLastWakeTime, xFrequency);
+
     unsigned long startTick = micros();
 
     Dsp::Input input{};
@@ -216,6 +228,21 @@ void TaskMusicProcessing(void* pvParameters) {
     input.pinGate[0] = adcToVoltsDevboard.map(read_adc_idf(ADC_1));
     input.pinMod[0] = adcToVoltsDevboard.map(read_adc_idf(ADC_2));
     input.pinMod[1] = adcToVoltsDevboard.map(read_adc_idf(ADC_3));
+
+    switch (device.parameters.clockSource) {
+      case ClockInputSignal::Internal: {
+        device.dsp.clockSource = Dsp::ClockSource::Internal;
+        break;
+      }
+      case ClockInputSignal::Midi: {
+        device.dsp.clockSource = Dsp::ClockSource::MidiIn;
+        break;
+      }
+      case ClockInputSignal::Ppqn4: {
+        device.dsp.clockSource = Dsp::ClockSource::SyncIn;
+        break;
+      }
+    }
 
     Dsp::Output output = device.dsp.processWithMidi(input, MIDI);
 

@@ -27,7 +27,7 @@ struct Ui {
   };
 
   struct MenuItem {
-    enum class MenuType { Channel, ModA, ModB };
+    enum class MenuType { Channel, Sync, ModA, ModB };
     MenuType menuType;
     std::string title;
     std::string helpText;
@@ -37,8 +37,9 @@ struct Ui {
     int itemsVerticalShift{0};
     int previousItem{0};
     int currentItem{0};
-    std::array<MenuItem, 3> items = {
+    std::array<MenuItem, 4> items = {
         MenuItem{MenuItem::MenuType::Channel, "MCH", "MIDI channel"},
+        MenuItem{MenuItem::MenuType::Sync, "SNC", "Sync source"},
         MenuItem{MenuItem::MenuType::ModA, "CCA", "Modulation input A"},
         MenuItem{MenuItem::MenuType::ModB, "CCB", "Modulation input B"},
     };
