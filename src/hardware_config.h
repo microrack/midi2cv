@@ -9,10 +9,16 @@
 #include <driver/dac.h>
 #include <driver/uart.h>
 
-const int ADC_0 = 35;
-const int ADC_1 = 39;
-const int ADC_2 = 34;
-const int ADC_3 = 36;
+const int BUTTON_A = 0;
+const int BUTTON_B = 36;
+const int ENCODER_SW = 39;
+const int ADC_0 = 4;
+const int ADC_1 = 2;
+const int ADC_2 = 15;
+const int SYNC_IN = 18;
+const int SYNC_OUT = 19;
+const int OUT_0 = 26;
+
 #include "adc_arduino.h"
 #include "dma_serial.h"
 
@@ -22,8 +28,9 @@ const int SCREEN_WIDTH = 128;
 const int SCREEN_HEIGHT = 32;
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-DmaSerial midiSerial;
-midi::MidiInterface<DmaSerial, midi::DefaultSettings> MIDI(midiSerial);
+// DmaSerial midiSerial;
+// midi::MidiInterface<DmaSerial, midi::DefaultSettings> MIDI(midiSerial);
+MIDI_CREATE_CUSTOM_INSTANCE(HardwareSerial, Serial2, MIDI, midi::DefaultSerialSettings);
 
 ESP32Encoder encoder;
 
@@ -31,19 +38,6 @@ ESP32Encoder encoder;
 const int OLED_RESET = -1;
 // See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 const int SCREEN_ADDRESS = 0x3C;
-
-const int DIP_0 = 4;
-const int DIP_1 = 5;
-const int DIP_2 = 18;
-const int DIP_3 = 19;
-const int BUTTON_A = 23;
-const int BUTTON_B = 32;
-const int ENCODER_SW = 13;
-const int PWM = 27;
-const int DAC_1 = 26;
-const int DAC_2 = 25;
-const int SYNC_IN = 15;
-const int SYNC_OUT = 2;
 
 struct Button {
   // A wrapper for Bounce2 library to handle if we already checked a press
@@ -82,19 +76,21 @@ Button buttonB{BUTTON_B, 5};
 Button encoderButton{ENCODER_SW, 5};
 
 void setupHardware() {
-  encoder.attachFullQuad(12, 14);
+  encoder.attachFullQuad(35, 34);
   encoder.setCount(0);
   encoder.setFilter(1023);
 
-  pinMode(DIP_0, INPUT_PULLUP);
-  pinMode(DIP_1, INPUT_PULLUP);
-  pinMode(DIP_2, INPUT_PULLUP);
-  pinMode(DIP_3, INPUT_PULLUP);
+//   pinMode(DIP_0, INPUT_PULLUP);
+//   pinMode(DIP_1, INPUT_PULLUP);
+//   pinMode(DIP_2, INPUT_PULLUP);
+//   pinMode(DIP_3, INPUT_PULLUP);
   pinMode(BUTTON_A, INPUT_PULLUP);
   pinMode(BUTTON_B, INPUT_PULLUP);
   pinMode(ENCODER_SW, INPUT_PULLUP);
   pinMode(SYNC_IN, INPUT);
   pinMode(SYNC_OUT, OUTPUT);
+
+  pinMode(13, INPUT);
 
   // randomSeed(analogRead(0));
 
@@ -118,12 +114,13 @@ void setupHardware() {
   int pwmBits = 12;
   int pwmRange = 1 << pwmBits;
   ledcSetup(0, 80000000 / pwmRange, pwmBits);
-  ledcAttachPin(PWM, 0);
+  ledcAttachPin(OUT_0, 0);
 
   adc_setup();
 
   // test Serial2 for loopback
 
+  /*
   Serial2.begin(31250, SERIAL_8N1, RX2, TX2);
   Serial.println("Serial2 for MIDI loopback test initialized.");
   delay(1000);
@@ -173,6 +170,7 @@ void setupHardware() {
     Serial.println("No bytes available for reading.");
   }
   Serial2.end();
+  */
 }
 
 #define EX_UART_NUM UART_NUM_1
