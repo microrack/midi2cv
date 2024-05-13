@@ -22,7 +22,7 @@ void setupWifi();
 
 void setup() {
   setupHardware();
-  setupWifi();
+  // setupWifi();
   setupDsp();
 
   // the first core is dedicated to UI/WiFI and other non-realtime tasks
@@ -38,7 +38,7 @@ void setup() {
   xTaskCreatePinnedToCore(TaskUpdateDebouncer, "TaskDebouncer", 10000, NULL, 0,
                           &TaskUpdateDebouncerHandle, 0);
 
-  xTaskCreatePinnedToCore(TaskWebServer, "TaskWebServer", 10000, NULL, 1, &TaskWebServerHandle, 0);
+  // xTaskCreatePinnedToCore(TaskWebServer, "TaskWebServer", 10000, NULL, 1, &TaskWebServerHandle, 0);
 
   xTaskCreatePinnedToCore(TaskMusicProcessing, "TaskMusic", 50000, NULL, 1, &TaskMusicHandle, 1);
 }
@@ -227,7 +227,7 @@ void TaskMusicProcessing(void* pvParameters) {
     input.pinCv[0] = adcToVoltsDevboard.map(mean_value);
     input.pinGate[0] = adcToVoltsDevboard.map(read_adc_idf(ADC_1));
     input.pinMod[0] = adcToVoltsDevboard.map(read_adc_idf(ADC_2));
-    input.pinMod[1] = adcToVoltsDevboard.map(read_adc_idf(ADC_3));
+    // input.pinMod[1] = adcToVoltsDevboard.map(read_adc_idf(ADC_3));
 
     switch (device.parameters.clockSource) {
       case ClockInputSignal::Internal: {
@@ -261,11 +261,11 @@ void TaskMusicProcessing(void* pvParameters) {
     unsigned long endTick = micros();
     device.ui.idle.dspTickTime = endTick - startTick;
     // uncomment to get a debug layout in UI
-    // device.ui.idle.debug = true;
-    device.ui.idle.debug1 = input.pinCv[0];
+    device.ui.idle.debug = true;
+    device.ui.idle.debug1 = output.cv[0]; // input.pinCv[0];
     device.ui.idle.debug2 = input.pinGate[0];
-    device.ui.idle.debug3 = input.pinMod[0];
-    device.ui.idle.debug4 = round(output.cvForMidi[0] * 100.0f) / 100.0f;
+    device.ui.idle.debug3 = output.gate[0];
+    device.ui.idle.debug4 = round(output.cv[0] * 100.0f) / 100.0f;
   }
 }
 
