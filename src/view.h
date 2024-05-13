@@ -2,7 +2,7 @@
 
 void drawIdle(const Ui::Idle& idle) {
   display.clearDisplay();
-  display.setRotation(1);
+  display.setRotation(3);
   display.setFont(&Picopixel);
   display.setTextSize(2);
   display.setCursor(0, 10);
@@ -23,7 +23,7 @@ void drawIdle(const Ui::Idle& idle) {
     }
   }
 
-  display.setRotation(0);
+  display.setRotation(2);
   display.setFont();
   display.setTextSize(1);
   display.setCursor(0, 0);
@@ -34,7 +34,7 @@ void drawIdle(const Ui::Idle& idle) {
     display.printf("Fine\n");
   }
 
-  display.setRotation(1);
+  display.setRotation(3);
 
   if (idle.debug) {
     display.clearDisplay();
@@ -70,7 +70,7 @@ for (int i = 0; i < idle.outputSyncClock.bufferSize; i++) {
 
 void drawMenu(const Ui::Menu& menu) {
   display.clearDisplay();
-  display.setRotation(1);
+  display.setRotation(3);
   display.setCursor(0, 0);
   display.setFont();
   display.setTextSize(1);
@@ -125,7 +125,7 @@ void drawMenu(const Ui::Menu& menu) {
 
 void drawTapTempo(const Ui::Tap& tap) {
   display.clearDisplay();
-  display.setRotation(1);
+  display.setRotation(3);
   display.fillRect(0, 0, display.width(), display.height(), SSD1306_BLACK);
   display.setFont(&Picopixel);
   display.setTextSize(2);
@@ -140,7 +140,7 @@ void drawTapTempo(const Ui::Tap& tap) {
 
 void drawUI(const Ui& ui) {
   display.clearDisplay();
-  display.setRotation(1);
+  display.setRotation(3);
   switch (ui.mode) {
     case Ui::Mode::Idle:
       drawIdle(ui.idle);
