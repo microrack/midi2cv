@@ -101,10 +101,14 @@ void setupHardware() {
 
   pinMode(OUT_0, INPUT);
   pinMode(GATE_0, OUTPUT);
-  
+
   pinMode(GATE_1, INPUT);
   pinMode(GATE_2, INPUT);
   pinMode(GATE_3, INPUT);
+
+  pinMode(OUT_2, OUTPUT);
+  pinMode(OUT_3, OUTPUT);
+
 
   // randomSeed(analogRead(0));
 
@@ -127,14 +131,8 @@ void setupHardware() {
 
   int pwmBits = 12;
   int pwmRange = 1 << pwmBits;
-  ledcSetup(0, 80000000 / pwmRange, pwmBits);
-  ledcAttachPin(OUT_0, 0);
   ledcSetup(1, 80000000 / pwmRange, pwmBits);
   ledcAttachPin(OUT_1, 1);
-  ledcSetup(2, 80000000 / pwmRange, pwmBits);
-  ledcAttachPin(OUT_2, 2);
-  ledcSetup(3, 80000000 / pwmRange, pwmBits);
-  ledcAttachPin(OUT_3, 3);
 
   adc_setup();
 

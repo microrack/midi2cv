@@ -566,7 +566,8 @@ struct Dsp {
       // let's not support glide for now
       // o.cv[c] = p.CVOutWithGlide[c].tick(i.midiNoteCv[c], 0.2 /*smoothedGlide*/);
       o.cv[c] = i.midiNoteCv[c];
-      o.gate[c] = p.noteOnOffToGate[c].tick(i.noteOnTrigger[c], i.noteOffTrigger[c]);
+      o.gate[c] = currentlySoundingNotes.size();
+      // p.noteOnOffToGate[c].tick(i.noteOnTrigger[c], i.noteOffTrigger[c]);
     }
 
     //
