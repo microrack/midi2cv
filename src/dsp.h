@@ -41,15 +41,16 @@ float midiNoteToCv(int midiNote) {
   // Each semitone is one MIDI note number apart
   // CV (Control Voltage) for MIDI is typically 1V/octave
   // To convert MIDI note numbers to CV, we calculate the voltage as follows:
-  // Voltage = (MIDI note number - 69) / 12.0
+  // Voltage = (MIDI note number - 60) / 12.0
   // This formula gives us a voltage of 0V for MIDI note 69, and increases/decreases by 1V per
   // octave
-  return (midiNote - 69) / 12.0f;
+  float res = (midiNote - 60) / 12.0f;
+  return min(3.2f, max(0.0f, res));
 }
 
 int cvToMidiNote(float cv) {
   // Inverse of the above
-  return 69 + round(12.0f * cv);
+  return 60 + round(12.0f * cv);
 }
 
 struct LinearMapper {
