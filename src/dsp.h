@@ -37,20 +37,16 @@ float codecValueToVolts(int codecValue,
 
 float midiNoteToCv(int midiNote) {
   // MIDI note numbers are in the range 0-127
-  // Middle C (C4) is MIDI note number 60
-  // Each semitone is one MIDI note number apart
-  // CV (Control Voltage) for MIDI is typically 1V/octave
-  // To convert MIDI note numbers to CV, we calculate the voltage as follows:
-  // Voltage = (MIDI note number - 60) / 12.0
+  // Middle C (C2) is MIDI note number 60
   // This formula gives us a voltage of 0V for MIDI note 69, and increases/decreases by 1V per
   // octave
-  float res = (midiNote - 60) / 12.0f;
+  float res = (midiNote - 36) / 12.0f;
   return min(3.2f, max(0.0f, res));
 }
 
 int cvToMidiNote(float cv) {
   // Inverse of the above
-  return 60 + round(12.0f * cv);
+  return 36 + round(12.0f * cv);
 }
 
 struct LinearMapper {
