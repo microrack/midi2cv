@@ -15,8 +15,8 @@
 #define LIN_COEFF_A_ROUND (LIN_COEFF_A_SCALE / 2)
 #define ADC_12_BIT_RES    4096
 
-std::array<uint8_t, 4> adcPins = {ADC_0, ADC_1, ADC_2, ADC_3};
-std::array<esp_adc_cal_characteristics_t, 4> adc_chars;
+std::array<uint8_t, 3> adcPins = {ADC_0, ADC_1, ADC_2};
+std::array<esp_adc_cal_characteristics_t, 3> adc_chars;
 
 uint8_t adcPinToCharsIndex(uint8_t pin) {
   switch (pin) {
@@ -26,8 +26,6 @@ uint8_t adcPinToCharsIndex(uint8_t pin) {
       return 1;
     case ADC_2:
       return 2;
-    case ADC_3:
-      return 3;
   }
   return 0;
 }
