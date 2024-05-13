@@ -1,5 +1,7 @@
 #pragma once
+
 #include <MIDI.h>
+// MIDI_CREATE_CUSTOM_INSTANCE(HardwareSerial, Serial2, MIDI, midi::DefaultSerialSettings);
 
 #include <unordered_map>
 
@@ -184,7 +186,7 @@ struct RisingAnalogEdgeDetectorWithDelay : public RisingAnalogEdgeDetector {
 };
 
 struct Clock {
-  int counter{999999999};
+  // int counter{999999999};
   float counter{999999999.0f};
 
   int tick(float period) {
@@ -193,7 +195,7 @@ struct Clock {
     if (counter >= period) {
       if (counter == 999999999.0f) {
         counter = 0.0f;
-        break;
+        return 1;
       } else {
         counter = counter - period;
       }
