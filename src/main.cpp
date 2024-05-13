@@ -253,8 +253,8 @@ void TaskMusicProcessing(void* pvParameters) {
     }
     device.ui.idle.debug2 = output.midiClockTrigger;
 
-    // PWM output
-    ledcWrite(0, voltsToDac.map(output.cv[0]));
+    ledcWrite(1, voltsToDac.map(output.cv[0]));
+    digitalWrite(GATE_0, output.gate[0] > 0 ? HIGH : LOW);
 
     digitalWrite(SYNC_OUT, output.pulseSync);
 

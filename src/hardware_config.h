@@ -17,7 +17,16 @@ const int ADC_1 = 2;
 const int ADC_2 = 15;
 const int SYNC_IN = 18;
 const int SYNC_OUT = 19;
+
 const int OUT_0 = 26;
+const int OUT_1 = 25;
+const int OUT_2 = 33;
+const int OUT_3 = 32;
+
+const int GATE_0 = 13;
+const int GATE_1 = 12;
+const int GATE_2 = 14;
+const int GATE_3 = 27;
 
 #include "adc_arduino.h"
 #include "dma_serial.h"
@@ -90,7 +99,12 @@ void setupHardware() {
   pinMode(SYNC_IN, INPUT);
   pinMode(SYNC_OUT, OUTPUT);
 
-  pinMode(13, INPUT);
+  pinMode(OUT_0, INPUT);
+  pinMode(GATE_0, OUTPUT);
+  
+  pinMode(GATE_1, INPUT);
+  pinMode(GATE_2, INPUT);
+  pinMode(GATE_3, INPUT);
 
   // randomSeed(analogRead(0));
 
@@ -115,6 +129,12 @@ void setupHardware() {
   int pwmRange = 1 << pwmBits;
   ledcSetup(0, 80000000 / pwmRange, pwmBits);
   ledcAttachPin(OUT_0, 0);
+  ledcSetup(1, 80000000 / pwmRange, pwmBits);
+  ledcAttachPin(OUT_1, 1);
+  ledcSetup(2, 80000000 / pwmRange, pwmBits);
+  ledcAttachPin(OUT_2, 2);
+  ledcSetup(3, 80000000 / pwmRange, pwmBits);
+  ledcAttachPin(OUT_3, 3);
 
   adc_setup();
 
