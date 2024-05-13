@@ -261,11 +261,12 @@ void TaskMusicProcessing(void* pvParameters) {
     unsigned long endTick = micros();
     device.ui.idle.dspTickTime = endTick - startTick;
     // uncomment to get a debug layout in UI
-    device.ui.idle.debug = true;
+    // device.ui.idle.debug = true;
     device.ui.idle.debug1 = output.cv[0]; // input.pinCv[0];
     device.ui.idle.debug2 = input.pinGate[0];
     device.ui.idle.debug3 = output.gate[0];
-    device.ui.idle.debug4 = round(output.cv[0] * 100.0f) / 100.0f;
+    // device.ui.idle.debug4 = round(output.cv[0] * 100.0f) / 100.0f;
+    device.ui.idle.debug4 = device.dsp.lastCvMidiNote[0];
   }
 }
 

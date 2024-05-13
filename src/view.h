@@ -27,9 +27,11 @@ void drawIdle(const Ui::Idle& idle) {
   display.setFont();
   display.setTextSize(1);
   display.setCursor(0, 0);
-  display.printf("WiFi:%s\n", idle.wifiString.substr(0, 5).c_str());
+  /*display.printf("WiFi:%s\n", idle.wifiString.substr(0, 5).c_str());
   display.printf("IP%s\n", idle.ipString.c_str());
   display.printf("Audio_t:%03dus\n", idle.dspTickTime);
+  */
+
   if (idle.fine) {
     display.printf("Fine\n");
   }
