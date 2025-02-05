@@ -89,10 +89,10 @@ void setupHardware() {
   encoder.setCount(0);
   encoder.setFilter(1023);
 
-//   pinMode(DIP_0, INPUT_PULLUP);
-//   pinMode(DIP_1, INPUT_PULLUP);
-//   pinMode(DIP_2, INPUT_PULLUP);
-//   pinMode(DIP_3, INPUT_PULLUP);
+  //   pinMode(DIP_0, INPUT_PULLUP);
+  //   pinMode(DIP_1, INPUT_PULLUP);
+  //   pinMode(DIP_2, INPUT_PULLUP);
+  //   pinMode(DIP_3, INPUT_PULLUP);
   pinMode(BUTTON_A, INPUT_PULLUP);
   pinMode(BUTTON_B, INPUT_PULLUP);
   pinMode(ENCODER_SW, INPUT_PULLUP);
@@ -108,7 +108,6 @@ void setupHardware() {
 
   pinMode(OUT_2, OUTPUT);
   pinMode(OUT_3, OUTPUT);
-
 
   // randomSeed(analogRead(0));
 
@@ -139,7 +138,7 @@ void setupHardware() {
   // test Serial2 for loopback
 
   /*
-  Serial2.begin(31250, SERIAL_8N1, RX2, TX2);
+  Serial2.begin(31250, SERIAL_8N1, RX2_pin, TX2_pin);
   Serial.println("Serial2 for MIDI loopback test initialized.");
   delay(1000);
   // Send some bytes

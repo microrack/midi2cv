@@ -4,8 +4,8 @@
 // but it uses ESP32 DMA to send and receive data
 // much faster
 
-const int RX2 = 16;
-const int TX2 = 17;
+const int RX2_pin = 16;
+const int TX2_pin = 17;
 // we work at 1 ms, so 32 samples per ms at 31250 bauds
 // 1024 must be more than enough
 const int UART_BUFFER_SIZE = 1024;
@@ -28,7 +28,8 @@ class DmaSerial {
     ESP_ERROR_CHECK(
         uart_driver_install(UART_NUM_2, UART_BUFFER_SIZE * 2, UART_BUFFER_SIZE * 2, 0, NULL, 0));
     ESP_ERROR_CHECK(uart_param_config(UART_NUM_2, &uart_config));
-    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, TX2, RX2, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_ERROR_CHECK(
+        uart_set_pin(UART_NUM_2, TX2_pin, RX2_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
   }
 
   template<typename T>
